@@ -9,16 +9,11 @@ class Encryption
 {
 public:
 
-    Encryption()
+    Encryption() : m_encryptionKey{}
     {
         // since this is only a POC we will implement a simple  //
         // encryption algorithm instead of making aes-256       //
         // for the poc we will implment Xor-256                 //
-
-        Encryption::m_encryptionKey = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                                          0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-                                          0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-                                          0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F };
 
         // -- set the key to a random 32-byte value --
 
@@ -80,7 +75,6 @@ public:
 
 private:
     std::array<uint8_t, 32> m_encryptionKey;
-    std::string m_plaintext;
 };
 
 /*

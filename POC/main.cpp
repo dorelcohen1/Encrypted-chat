@@ -6,7 +6,7 @@ int main(int argc, char* argv[])
 	// Test the encryption and decryption functions multiple times 
 	// this makes sure that the encryption key is generated randomly 
     // each time and that the functions work correctly.
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 10; ++i)
     {
         // Implementation of testing the encryption and decryption functions
         std::string plaintext = "This is a test string for encryption.";
