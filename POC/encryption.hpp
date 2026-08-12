@@ -1,9 +1,11 @@
-#include <array>
+// for data structures:
+#include <array>   // this is needed for std::array
+#include <string>  // this header is needed for std::string
+#include <sstream> // this header is needed for std::ostringstream
+// for bit control:
 #include <cstdint> // this header is needed for uint8_t
-#include <string>
-#include <random>
-#include <sstream>
-#include <iomanip>
+#include <random>  // this header is needed for std::random_device, std::mt19937, and std::uniform_int_distribution
+#include <iomanip> // this header is needed for std::setw and std::setfill
 
 class Encryption 
 {
@@ -33,6 +35,17 @@ public:
         }
     }
 
+    /*
+    * the encryption logic is as follows:
+	*   get the length of the plaintext then loop over it
+	*   perform an XOR operation between the plaintext byte and the key byte using ^
+	*   use the i % m_encryptionKey.size() to wrap around the key if the plaintext is longer than the key 
+    *   this looping happens becuse the reminder of dividing by its size will be the corent placment untill it 
+	*   is of the same aize and then the reminder will be 0 and it will start over again
+	*   we then use std::hex to convert the byte to a hex string and append it to the output string
+	*   then we set it to 2 char only using std::setw(2) and fill it with 0s using std::setfill('0') to 
+	*   make sure it is always 2 char long and then we return the hex string as the output of the function
+    */
     std::string Encrypt(const std::string& plaintext)
     {
 		// The Encrypt function takes a plaintext string and returns an encrypted string in hexadecimal format.
@@ -51,6 +64,12 @@ public:
         return hexStream.str(); // Clean, printable string safe for sockets
     }
     
+    /*
+	* the decryption logic is as follows:
+	*   we loop over the length of the hexCiphertext in steps of 2 because each byte is represented by 2 hex characters
+	*   we use substr to get the 2 hex characters and then we use strtol to convert it back to a byte
+	*   then we perform the XOR operation with the key byte to retrieve the original plaintext byte
+    */
     std::string Decrypt(const std::string& hexCiphertext)
     {
         // The Decrypt function takes a hexadecimal string (representing the encrypted data) and returns the original plaintext string.
