@@ -1,0 +1,19 @@
+name: Compile Check (POC)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile C++ files in POC folder
+        run: |
+          g++ -std=c++17 POC/*.cpp -o build_test
