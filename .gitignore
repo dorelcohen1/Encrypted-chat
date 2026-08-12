@@ -67,3 +67,60 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+
+# ==========================================
+# Visual Studio / MSBuild
+# ==========================================
+# VS user-specific and configuration settings
+.vs/
+*.user
+*.userosv
+*.sln.docstates
+
+# MSBuild temporary and target outputs
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Bb]uild/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio Code / Test results
+.vscode/
+*.suo
+*.user
+*.userosv
+*.sln.docstates
+*.clw
+*.vcproj
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vcxproj.aps
+
+# IntelliSense / Database files
+*.ipch
+*.db
+*.opendb
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Profiler / Code Coverage results
+*.vsp
+*.vspx
+*.coverage
+*.coveragexml
+
+# Nuget / Diagnostics
+*.nupkg
+.diagnostic/

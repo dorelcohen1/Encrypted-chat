@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Encrypted-chat.vcxproj" Id="fc56d8af-6d64-4799-b809-928c56767fe0" />
+</Solution>
