@@ -22,10 +22,11 @@ jobs:
       - name: Static Analysis (Cppcheck)
         run: |
           cppcheck --enable=warning,performance,portability \
-          -iPOC/include \
           --inline-suppr \
           --error-exitcode=1 \
-          POC/
+          --suppress=missingInclude \
+          --suppress=toomanyconfigs \
+          POC/*.cpp
           
       - name: Static Analysis (Cppcheck)
         run: |
