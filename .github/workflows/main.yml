@@ -18,17 +18,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cppcheck g++
-
+  
       - name: Static Analysis (Cppcheck)
         run: |
-          cppcheck --enable=all \
-          -IPOC/include \
-          --suppress=missingInclude \
-          --suppress=unusedFunction \
-          --inline-suppr \
-          --error-exitcode=1 \
-          POC/
-          
+          cppcheck --enable=all -iPOC/include --suppress=missingIncludeSystem --error-exitcode=1 POC/
+              
       - name: Compile C++ files in POC folder
         run: |
           g++ -std=c++17 -isystem POC/include -pthread POC/*.cpp -o build_test
