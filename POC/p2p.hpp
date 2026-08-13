@@ -6,6 +6,7 @@
 class network
 {
 public:
+    network(const std::string& ip, int p);
     network();
     ~network();
 
@@ -13,6 +14,10 @@ public:
     void start_listening();
 
 private:
+
+    int port = PORT; // Use the constant from hard_numbers.hpp
+    std::string ip_address = IP_ADDRESS; // Use the constant from hard_numbers.hpp
+
     // Core Asio engine objects live safely inside the class private zone
     asio::io_context io_ctx_;
     asio::ip::tcp::acceptor acceptor_;
@@ -20,8 +25,14 @@ private:
     asio::ip::tcp::socket incoming_socket_;
 };
 
-// Constructor: Initialize the Asio context and bind the listener to your PORT constant
-network::network() : acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), PORT)), out_socket_(io_ctx_),incoming_socket_(io_ctx_)
+// Parameterized Constructor
+network::network(const std::string& ip, int p) : port(p), ip_address(ip), acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)), out_socket_(io_ctx_), incoming_socket_(io_ctx_)
+{
+
+}
+
+// Constructor: Initialize the Asio context and bind the listener to your port constant
+network::network() : acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)), out_socket_(io_ctx_),incoming_socket_(io_ctx_)
 {
 
 }
@@ -39,7 +50,7 @@ void network::send_data(const std::string& msg)
         // Only connect if the outbound pipe isn't open yet
         if (!out_socket_.is_open()) 
         {
-            asio::ip::tcp::endpoint peer_addr(asio::ip::make_address(IP_ADDRESS), PORT);
+            asio::ip::tcp::endpoint peer_addr(asio::ip::make_address(ip_address), port);
             out_socket_.connect(peer_addr);
             std::cout << "[Network] Connected to peer successfully." << std::endl;
         }
@@ -58,7 +69,7 @@ void network::start_listening()
 {
     try 
     {
-        std::cout << "Waiting for friend to connect on port " << PORT << "..." << std::endl;
+        std::cout << "Waiting for friend to connect on port " << port << "..." << std::endl;
 
         // Block the thread until someone connects
         acceptor_.accept(incoming_socket_);
