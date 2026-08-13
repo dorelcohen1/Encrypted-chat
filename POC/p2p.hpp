@@ -11,7 +11,10 @@ public:
     ~network();
 
     void send_data(const std::string& msg);
-    void start_listening();
+    std::string receive_data();
+
+    void accept_connection();
+    void connect_to_peer();
 
 private:
 
@@ -21,18 +24,25 @@ private:
     // Core Asio engine objects live safely inside the class private zone
     asio::io_context io_ctx_;
     asio::ip::tcp::acceptor acceptor_;
-    asio::ip::tcp::socket out_socket_;
-    asio::ip::tcp::socket incoming_socket_;
+
+	// Use a smart pointer for the session socket to manage its lifetime automatically
+    std::unique_ptr<asio::ip::tcp::socket> session_socket_;
 };
 
-// Parameterized Constructor
-network::network(const std::string& ip, int p) : port(p), ip_address(ip), acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)), out_socket_(io_ctx_), incoming_socket_(io_ctx_)
-{
 
+
+
+
+// --constructor and destructor implementations-- //
+
+// Parameterized Constructor
+network::network(const std::string& ip, int p) : port(p), ip_address(ip), acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+{
+    // session_socket_ starts as nullptr automatically
 }
 
-// Constructor: Initialize the Asio context and bind the listener to your port constant
-network::network() : acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)), out_socket_(io_ctx_),incoming_socket_(io_ctx_)
+// Default Constructor
+network::network() : acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
 {
 
 }
@@ -43,46 +53,93 @@ network::~network()
     io_ctx_.stop();
 }
 
+
+
+
+// --send and receive methods-- //
+
 void network::send_data(const std::string& msg)
 {
-    try 
+    try
     {
-        // Only connect if the outbound pipe isn't open yet
-        if (!out_socket_.is_open()) 
+        // Check if we actually have a connection first
+        if (session_socket_ && session_socket_->is_open())
         {
-            asio::ip::tcp::endpoint peer_addr(asio::ip::make_address(ip_address), port);
-            out_socket_.connect(peer_addr);
-            std::cout << "[Network] Connected to peer successfully." << std::endl;
+            asio::write(*session_socket_, asio::buffer(msg));
         }
-
-        // Send the raw characters over the wire
-        asio::write(out_socket_, asio::buffer(msg));
-        std::cout << "Message sent successfully!" << std::endl;
+        else
+        {
+            std::cerr << "[Send Error]: No active connection found!" << std::endl;
+        }
     }
-    catch (std::exception& e) 
+    catch (std::exception& e)
     {
         std::cerr << "[Send Error]: " << e.what() << std::endl;
     }
 }
 
-void network::start_listening()
+std::string network::receive_data()
 {
-    try 
+    try
     {
-        std::cout << "Waiting for friend to connect on port " << port << "..." << std::endl;
+        if (session_socket_ && session_socket_->is_open())
+        {
+            char data_buffer[1024] = { 0 };
+            size_t bytes_received = session_socket_->read_some(asio::buffer(data_buffer));
 
-        // Block the thread until someone connects
-        acceptor_.accept(incoming_socket_);
-        std::cout << "Friend connected!" << std::endl;
-
-        // Read the incoming bytes into a text buffer
-        char data_buffer[1024] = { 0 };
-        size_t bytes_received = incoming_socket_.read_some(asio::buffer(data_buffer));
-
-        std::cout << "Received: " << std::string(data_buffer, bytes_received) << std::endl;
+            return std::string(data_buffer, bytes_received);
+        }
     }
-    catch (std::exception& e) 
+    catch (std::exception& e)
     {
-        std::cerr << "[Listen Error]: " << e.what() << std::endl;
+        std::cerr << "[Receive Error]: " << e.what() << std::endl;
+    }
+    return ""; // Return empty if failed
+}
+
+
+
+
+
+// --connection methods-- //
+
+void network::accept_connection()
+{
+    try
+    {
+        // 1. Initialize the socket inside the smart pointer
+        session_socket_ = std::make_unique<asio::ip::tcp::socket>(io_ctx_);
+
+        std::cout << "[Network] Waiting for a friend on port " << port << "..." << std::endl;
+
+        // 2. Block until someone connects, placing the connection into our smart-pointer socket
+        acceptor_.accept(*session_socket_);
+
+        std::cout << "[Network] Friend connected from: "
+            << session_socket_->remote_endpoint().address().to_string()
+            << std::endl;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "[Accept Error]: " << e.what() << std::endl;
+    }
+}
+
+void network::connect_to_peer()
+{
+    try
+    {
+        // 1. Initialize the socket
+        session_socket_ = std::make_unique<asio::ip::tcp::socket>(io_ctx_);
+
+        // 2. Resolve the address and connect
+        asio::ip::tcp::endpoint peer_addr(asio::ip::make_address(ip_address), port);
+        session_socket_->connect(peer_addr);
+
+        std::cout << "[Network] Successfully connected to " << ip_address << ":" << port << std::endl;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "[Connect Error]: " << e.what() << std::endl;
     }
 }

@@ -35,6 +35,18 @@ public:
         }
     }
 
+    // Added this constructor to allow loading an existing key
+    Encryption(const std::array<uint8_t, 32>& sharedKey) : m_encryptionKey(sharedKey)
+    {
+        // This ignores the random generation and uses the provided key instead
+    }
+
+    // Added this getter so we can export a randomly generated key to the other user
+    std::array<uint8_t, 32> GetKey() const
+    {
+        return m_encryptionKey;
+    }
+
     /*
     * the encryption logic is as follows:
 	*   get the length of the plaintext then loop over it
