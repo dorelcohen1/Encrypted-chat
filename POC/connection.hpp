@@ -81,7 +81,7 @@ void Connection::handle_handshake(bool is_host)
         std::string received = m_net->receive_data();
 
         // 2. Verify the Header
-        if (received.substr(0, 4) == "KEY:")
+        if (received.length() >= 4 && received.substr(0, 4) == "KEY:")
         {
             std::string hexKey = received.substr(4);
             std::array<uint8_t, 32> sharedKey;
