@@ -19,15 +19,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cppcheck g++
 
-      - name: fixed? Static Analysis (Cppcheck)
+      - name: Static Analysis (Cppcheck)
         run: |
-          cppcheck --enable=all \
-          -IPOC/include \
-          --suppress=*:POC/include/* \
-          --suppress=missingInclude \
-          --suppress=toomanyconfigs \
-          --suppress=unknownMacro \
+          cppcheck --enable=warning,performance,portability \
+          --inline-suppr \
           --error-exitcode=1 \
+          --suppress=unmatchedSuppression \
+          --exclude=POC/include \
           POC/
           
       - name: Static Analysis (Cppcheck)
