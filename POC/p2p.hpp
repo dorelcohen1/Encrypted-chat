@@ -108,16 +108,15 @@ void network::accept_connection()
     try
     {
         // 1. Initialize the socket inside the smart pointer
-        session_socket_ = std::make_unique<asio::ip::tcp::socket>(io_ctx_);
+		session_socket_ = std::make_unique<asio::ip::tcp::socket>(io_ctx_); // we need a pointer because acceptor_.accept() requires a reference to a socket
+		// fill the pointer with a new socket object
 
         std::cout << "[Network] Waiting for a friend on port " << port << "..." << std::endl;
 
         // 2. Block until someone connects, placing the connection into our smart-pointer socket
-        acceptor_.accept(*session_socket_);
+		acceptor_.accept(*session_socket_); // give the reference of the socket to acceptor_.accept() so it can fill it with the new connection
 
-        std::cout << "[Network] Friend connected from: "
-            << session_socket_->remote_endpoint().address().to_string()
-            << std::endl;
+        std::cout << "[Network] Friend connected from: " << session_socket_->remote_endpoint().address().to_string() << std::endl;
     }
     catch (std::exception& e)
     {
