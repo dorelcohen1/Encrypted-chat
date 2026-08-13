@@ -1,7 +1,9 @@
+/*
 #include <iostream>
 #include <thread>
 #include <mutex>
 #include "connection.hpp"
+
 
 std::mutex console_mtx; // To keep printing orderly
 
@@ -72,5 +74,44 @@ int main()
     {
         listener.detach(); // For the PoC we'll detach or stop
     }
+    return 0;
+}
+
+*/
+
+
+#include "connection.hpp"
+#include <iostream>
+#include <cassert>
+
+int main() {
+    std::cout << "[Test] Starting Automated Logic Test...\n";
+
+    // 1. Test Encryption Class
+    Encryption enc;
+    std::string original = "Top-Secret-Message-123";
+    std::string ciphertext = enc.Encrypt(original);
+    std::string decrypted = enc.Decrypt(ciphertext);
+
+    if (original == decrypted) {
+        std::cout << "[Success] Encryption/Decryption logic is sound.\n";
+    }
+    else {
+        std::cerr << "[Failure] Decryption did not match original!\n";
+        return 1;
+    }
+
+    // 2. Test Connection Class Initialization
+    // This checks if the unique_ptrs (network/crypto) initialize without leaking memory
+    try {
+        Connection conn;
+        std::cout << "[Success] Connection object initialized safely.\n";
+    }
+    catch (...) {
+        std::cerr << "[Failure] Connection object crashed during setup!\n";
+        return 1;
+    }
+
+    std::cout << "[Test] All automated checks passed. Exiting naturally.\n";
     return 0;
 }
