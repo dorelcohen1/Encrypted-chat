@@ -21,7 +21,8 @@ jobs:
 
       - name: fixed Static Analysis (Cppcheck)
         run: |
-          cppcheck --enable=warning,error,performance,portability \
+          cppcheck --enable=warning,performance,portability \
+          -IPOC \
           -iPOC/include \
           --suppress=missingInclude \
           --suppress=toomanyconfigs \
