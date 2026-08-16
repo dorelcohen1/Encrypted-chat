@@ -10,11 +10,13 @@ public:
     network();
     ~network();
 
-    void send_data(const std::string& msg);
+    bool send_data(const std::string& msg);
     std::string receive_data();
 
-    void accept_connection();
-    void connect_to_peer();
+    bool accept_connection();
+    bool connect_to_peer();
+
+    bool is_connected() const;
 
 private:
 
@@ -58,7 +60,7 @@ network::~network()
 
 // --send and receive methods-- //
 
-void network::send_data(const std::string& msg)
+bool network::send_data(const std::string& msg)
 {
     try
     {
@@ -70,12 +72,15 @@ void network::send_data(const std::string& msg)
         else
         {
             std::cerr << "[Send Error]: No active connection found!" << std::endl;
+            return false;
         }
     }
     catch (std::exception& e)
     {
         std::cerr << "[Send Error]: " << e.what() << std::endl;
+        return false;
     }
+    return true;
 }
 
 std::string network::receive_data()
@@ -85,16 +90,27 @@ std::string network::receive_data()
         if (session_socket_ && session_socket_->is_open())
         {
             char data_buffer[1024] = { 0 };
-            size_t bytes_received = session_socket_->read_some(asio::buffer(data_buffer));
+            asio::error_code ec; // Use error_code to prevent exceptions on disconnect
+            size_t bytes_received = session_socket_->read_some(asio::buffer(data_buffer), ec);
+
+            if (ec == asio::error::eof || ec == asio::error::connection_reset)
+            {
+                session_socket_->close(); // Explicitly close on our end
+                return "";
+            }
 
             return std::string(data_buffer, bytes_received);
         }
     }
     catch (std::exception& e)
     {
-        std::cerr << "[Receive Error]: " << e.what() << std::endl;
+        if (session_socket_)
+        {
+            session_socket_->close();
+        }
+		std::cerr << "[Receive Error]: " << e.what() << std::endl;
     }
-    return ""; // Return empty if failed
+    return "";
 }
 
 
@@ -103,7 +119,7 @@ std::string network::receive_data()
 
 // --connection methods-- //
 
-void network::accept_connection()
+bool network::accept_connection()
 {
     try
     {
@@ -117,14 +133,17 @@ void network::accept_connection()
 		acceptor_.accept(*session_socket_); // give the reference of the socket to acceptor_.accept() so it can fill it with the new connection
 
         std::cout << "[Network] Friend connected from: " << session_socket_->remote_endpoint().address().to_string() << std::endl;
+
+		return true;
     }
     catch (std::exception& e)
     {
         std::cerr << "[Accept Error]: " << e.what() << std::endl;
+		return false;
     }
 }
 
-void network::connect_to_peer()
+bool network::connect_to_peer()
 {
     try
     {
@@ -136,9 +155,17 @@ void network::connect_to_peer()
         session_socket_->connect(peer_addr);
 
         std::cout << "[Network] Successfully connected to " << ip_address << ":" << port << std::endl;
+		return true;
     }
     catch (std::exception& e)
     {
         std::cerr << "[Connect Error]: " << e.what() << std::endl;
+		return false;
     }
+
+}
+
+bool network::is_connected() const
+{
+    return session_socket_ && session_socket_->is_open();
 }

@@ -8,12 +8,17 @@ public:
     Connection();
 
     // Role-based establishment
-    void establish_as_host();
-    void establish_as_client(const std::string& ip, int port);
+    bool establish_as_host();
+    bool establish_as_client(const std::string& ip, int port);
 
     // High-level messaging
-    void send_secure_msg(const std::string& plaintext);
+    bool send_secure_msg(const std::string& plaintext);
     std::string receive_secure_msg();
+
+    bool is_alive() 
+    {
+        return m_net && m_net->is_connected();
+    }
 
 private:
     std::unique_ptr<network> m_net;
@@ -39,17 +44,35 @@ Connection::Connection() : m_crypto(std::make_unique<Encryption>())
 
 // --role-based establishment methods-- //
 
-void Connection::establish_as_host()
+bool Connection::establish_as_host()
 {
-    m_net->accept_connection();
+	// 1. Start listening for incoming connections
+    if (!m_net->accept_connection()) 
+    {
+		// If accept_connection fails, we return false to indicate failure
+        return false;
+    }
+	// 2. Perform the handshake to exchange keys
     handle_handshake(true);
+	// 3. Return true to indicate successful establishment
+    return true;
 }
 
-void Connection::establish_as_client(const std::string& ip, int port)
+bool Connection::establish_as_client(const std::string& ip, int port)
 {
+	// 1. Create a new network object with the provided IP and port
     m_net = std::make_unique<network>(ip, port);
-    m_net->connect_to_peer();
+
+	// 2. Attempt to connect to the host
+    if (!m_net->connect_to_peer()) 
+    {
+		// If connect_to_peer fails, we return false to indicate failure
+        return false;
+    }
+	// 3. Perform the handshake to exchange keys
     handle_handshake(false);
+	// 4. Return true to indicate successful establishment
+    return true;
 }
 
 
@@ -105,10 +128,33 @@ void Connection::handle_handshake(bool is_host)
 
 // --high-level messaging methods-- //
 
-void Connection::send_secure_msg(const std::string& plaintext)
+bool Connection::send_secure_msg(const std::string& plaintext)
 {
     std::string ciphertext = m_crypto->Encrypt(plaintext);
-    m_net->send_data(ciphertext);
+
+	// just to verify that the encryption isnt failing we cheak:
+	if (ciphertext.empty())
+	{
+		std::cerr << "[Error] Encryption failed, ciphertext is empty!" << std::endl;
+		return false; // exit early since this is a critical failure do not send the message
+	}
+	else if (ciphertext.length() < plaintext.length())
+	{
+		std::cerr << "[Warning] Ciphertext is shorter than plaintext, possible data loss!" << std::endl;
+        return false; // exit early since this is a critical failure do not send the message
+	}
+	else if (ciphertext.length() > plaintext.length() * 2)
+	{
+		std::cerr << "[Warning] Ciphertext is unexpectedly long, check encryption logic!" << std::endl;
+        return false; // exit early since this is a critical failure do not send the message
+	}
+    else if (plaintext == ciphertext)
+    {
+        std::cerr << "[Warning] Encrypted message is identical to plaintext!" << std::endl;
+		return false; // exit early since this is a critical failure do not send the message
+    }
+
+    return m_net->send_data(ciphertext);
 }
 
 std::string Connection::receive_secure_msg()
