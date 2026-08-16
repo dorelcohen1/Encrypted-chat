@@ -1,4 +1,4 @@
-/*
+
 #include <iostream>
 #include <thread>
 #include <mutex>
@@ -54,7 +54,7 @@ int main()
         std::string input;
         {
             std::lock_guard<std::mutex> lock(console_mtx);
-            std::cout << "> " << std::flush;
+            std::cout << "[you]: > " << std::flush;
         }
         std::getline(std::cin, input);
 
@@ -77,8 +77,7 @@ int main()
     return 0;
 }
 
-*/
-
+/*
 
 #include "connection.hpp"
 #include <iostream>
@@ -93,21 +92,25 @@ int main() {
     std::string ciphertext = enc.Encrypt(original);
     std::string decrypted = enc.Decrypt(ciphertext);
 
-    if (original == decrypted) {
+    if (original == decrypted) 
+    {
         std::cout << "[Success] Encryption/Decryption logic is sound.\n";
     }
-    else {
+    else 
+    {
         std::cerr << "[Failure] Decryption did not match original!\n";
         return 1;
     }
 
     // 2. Test Connection Class Initialization
     // This checks if the unique_ptrs (network/crypto) initialize without leaking memory
-    try {
+    try 
+    {
         Connection conn;
         std::cout << "[Success] Connection object initialized safely.\n";
     }
-    catch (...) {
+    catch (...) 
+    {
         std::cerr << "[Failure] Connection object crashed during setup!\n";
         return 1;
     }
@@ -115,3 +118,4 @@ int main() {
     std::cout << "[Test] All automated checks passed. Exiting naturally.\n";
     return 0;
 }
+*/
