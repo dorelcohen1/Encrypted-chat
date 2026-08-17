@@ -18,6 +18,8 @@ public:
 
     bool is_connected() const;
 
+    bool disconnect();
+
 private:
 
     int port = PORT; // Use the constant from hard_numbers.hpp
@@ -168,4 +170,27 @@ bool network::connect_to_peer()
 bool network::is_connected() const
 {
     return session_socket_ && session_socket_->is_open();
+}
+
+bool network::disconnect()
+{
+    try
+    {
+		// if the socket is open, close it
+        if (session_socket_ && session_socket_->is_open())
+        {
+            session_socket_->close();
+            return true;
+        }
+
+		// if the socket is already closed, we can just return true
+        return true;
+    }
+    catch (std::exception& e)
+    {
+		std::cerr << "[Disconnect Error]: " << e.what() << std::endl;
+		// If an error occurs during disconnect, we can log it and return false
+        return false;
+    }
+    return false;
 }

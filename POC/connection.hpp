@@ -20,6 +20,16 @@ public:
         return m_net && m_net->is_connected();
     }
 
+    bool stop()
+    {
+        if (m_net) 
+        {
+            return m_net->disconnect();
+        }
+
+        return false;
+    }
+
 private:
     std::unique_ptr<network> m_net;
     std::unique_ptr<Encryption> m_crypto;

@@ -99,7 +99,7 @@ int main()
             // Prompt printing
             {
                 std::lock_guard<std::mutex> lock(console_mtx);
-                std::cout << "[you   ]: > " << std::flush;
+                std::cout << "[you   ]: " << std::flush;
             }
 
             std::string input;
@@ -114,6 +114,11 @@ int main()
             if (input == "menu" || input == "exit") 
             {
                 running = false;
+                if (!conn.stop())
+                {
+                    std::cerr << "[Error] Failed to stop connection." << std::endl;
+					return 1;
+                }
                 break;
             }
 
