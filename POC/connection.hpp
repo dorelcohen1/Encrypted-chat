@@ -8,7 +8,7 @@ public:
     Connection();
 
     // Role-based establishment
-    bool establish_as_host();
+    bool establish_as_host(int port = PORT);
     bool establish_as_client(const std::string& ip, int port);
 
     // High-level messaging
@@ -54,17 +54,22 @@ Connection::Connection() : m_crypto(std::make_unique<Encryption>())
 
 // --role-based establishment methods-- //
 
-bool Connection::establish_as_host()
+bool Connection::establish_as_host(int port)
 {
-	// 1. Start listening for incoming connections
-    if (!m_net->accept_connection()) 
+    // 1. Create network configured with the chosen listening port
+    m_net = std::make_unique<network>(IP_ADDRESS, port);
+
+    // 2. Start listening for incoming connections
+    if (!m_net->accept_connection())
     {
-		// If accept_connection fails, we return false to indicate failure
+        // Return false if accept_connection fails
         return false;
     }
-	// 2. Perform the handshake to exchange keys
+
+    // 3. Perform the handshake to exchange keys
     handle_handshake(true);
-	// 3. Return true to indicate successful establishment
+
+    // 4. Return true to indicate successful establishment
     return true;
 }
 

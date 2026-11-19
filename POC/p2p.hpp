@@ -27,7 +27,8 @@ private:
 
     // Core Asio engine objects live safely inside the class private zone
     asio::io_context io_ctx_;
-    asio::ip::tcp::acceptor acceptor_;
+    // Managed via smart pointer so clients never bind a listening port
+    std::unique_ptr<asio::ip::tcp::acceptor> acceptor_;
 
 	// Use a smart pointer for the session socket to manage its lifetime automatically
     std::unique_ptr<asio::ip::tcp::socket> session_socket_;
@@ -40,15 +41,15 @@ private:
 // --constructor and destructor implementations-- //
 
 // Parameterized Constructor
-network::network(const std::string& ip, int p) : port(p), ip_address(ip), acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+network::network(const std::string& ip, int p) : port(p), ip_address(ip)
 {
-    // session_socket_ starts as nullptr automatically
+    // acceptor_ and session_socket_ remain nullptr until accept or connect
 }
 
 // Default Constructor
-network::network() : acceptor_(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+network::network() : port(PORT), ip_address(IP_ADDRESS)
 {
-
+    // acceptor_ and session_socket_ remain nullptr until accept or connect
 }
 
 network::~network()
@@ -56,9 +57,6 @@ network::~network()
     // Clean up connections when the class is destroyed
     io_ctx_.stop();
 }
-
-
-
 
 // --send and receive methods-- //
 
@@ -115,33 +113,31 @@ std::string network::receive_data()
     return "";
 }
 
-
-
-
-
 // --connection methods-- //
 
 bool network::accept_connection()
 {
     try
     {
-        // 1. Initialize the socket inside the smart pointer
-		session_socket_ = std::make_unique<asio::ip::tcp::socket>(io_ctx_); // we need a pointer because acceptor_.accept() requires a reference to a socket
-		// fill the pointer with a new socket object
+        // 1. Bind the acceptor only when hosting so clients never conflict on loopback
+        acceptor_ = std::make_unique<asio::ip::tcp::acceptor>(io_ctx_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+
+        // 2. Initialize the session socket inside the smart pointer
+        session_socket_ = std::make_unique<asio::ip::tcp::socket>(io_ctx_);
 
         std::cout << "[Network] Waiting for a friend on port " << port << "..." << std::endl;
 
-        // 2. Block until someone connects, placing the connection into our smart-pointer socket
-		acceptor_.accept(*session_socket_); // give the reference of the socket to acceptor_.accept() so it can fill it with the new connection
+        // 3. Block until a peer connects into our session socket
+        acceptor_->accept(*session_socket_);
 
         std::cout << "[Network] Friend connected from: " << session_socket_->remote_endpoint().address().to_string() << std::endl;
 
-		return true;
+        return true;
     }
     catch (std::exception& e)
     {
         std::cerr << "[Accept Error]: " << e.what() << std::endl;
-		return false;
+        return false;
     }
 }
 
@@ -176,21 +172,23 @@ bool network::disconnect()
 {
     try
     {
-		// if the socket is open, close it
+        // Close active session socket if open
         if (session_socket_ && session_socket_->is_open())
         {
             session_socket_->close();
-            return true;
         }
 
-		// if the socket is already closed, we can just return true
+        // Close listening acceptor if open so the port is freed cleanly
+        if (acceptor_ && acceptor_->is_open())
+        {
+            acceptor_->close();
+        }
+
         return true;
     }
     catch (std::exception& e)
     {
-		std::cerr << "[Disconnect Error]: " << e.what() << std::endl;
-		// If an error occurs during disconnect, we can log it and return false
+        std::cerr << "[Disconnect Error]: " << e.what() << std::endl;
         return false;
     }
-    return false;
 }
